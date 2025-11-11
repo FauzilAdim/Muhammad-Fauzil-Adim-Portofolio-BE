@@ -133,13 +133,14 @@ pub async fn create_project_with_upload(
     svc: web::Data<ProjectService>,
     mut payload: Multipart,
 ) -> impl Responder {
+    use crate::services::cloudinary::CloudinaryService;
+    
     let mut name: Option<String> = None;
     let mut description: Option<String> = None;
     let mut category: Option<String> = None;
-    let mut image_urls: Vec<String> = Vec::new();  // Changed to Vec for multiple images
-
-    // Create uploads directory if not exists
-    std::fs::create_dir_all("./uploads").unwrap_or_default();
+    let mut image_urls: Vec<String> = Vec::new();
+    
+    let cloudinary = CloudinaryService::new();
 
     while let Some(item) = payload.next().await {
         let mut field = match item {
@@ -182,19 +183,16 @@ pub async fn create_project_with_upload(
                 category = Some(String::from_utf8(bytes.to_vec()).unwrap_or_default());
             }
             "file" | "image" | "files" | "images" => {
-                // Generate filename with index to preserve upload order
                 let original_filename = content_disposition
                     .get_filename()
                     .map(|f| sanitize_filename::sanitize(f))
                     .unwrap_or_else(|| format!("{}.png", Uuid::new_v4()));
                 
-                // Get file extension
                 let extension = original_filename
                     .rsplit('.')
                     .next()
                     .unwrap_or("png");
                 
-                // Create filename with index prefix to preserve order
                 let index = image_urls.len();
                 let filename = format!("{}_{:03}_{}.{}", 
                     Uuid::new_v4(), 
@@ -203,29 +201,8 @@ pub async fn create_project_with_upload(
                     extension
                 );
 
-                let filepath = format!("./uploads/{}", filename);
-                let filepath_clone = filepath.clone();
-
-                let mut f = match web::block(move || std::fs::File::create(filepath_clone))
-                    .await
-                {
-                    Ok(Ok(file)) => file,
-                    Ok(Err(e)) => {
-                        return HttpResponse::InternalServerError().json(ApiResponse::<()> {
-                            status: "error".to_string(),
-                            message: format!("Error creating file: {}", e),
-                            data: None,
-                        });
-                    }
-                    Err(e) => {
-                        return HttpResponse::InternalServerError().json(ApiResponse::<()> {
-                            status: "error".to_string(),
-                            message: format!("Blocking error: {}", e),
-                            data: None,
-                        });
-                    }
-                };
-
+                // Collect image data
+                let mut image_data = Vec::new();
                 while let Some(chunk) = field.next().await {
                     let data = match chunk {
                         Ok(data) => data,
@@ -237,24 +214,27 @@ pub async fn create_project_with_upload(
                             });
                         }
                     };
-                    
-                    if let Err(e) = f.write_all(&data) {
+                    image_data.extend_from_slice(&data);
+                }
+
+                // Upload to Cloudinary
+                match cloudinary.upload_image(image_data, filename).await {
+                    Ok(url) => {
+                        image_urls.push(url);
+                    }
+                    Err(e) => {
                         return HttpResponse::InternalServerError().json(ApiResponse::<()> {
                             status: "error".to_string(),
-                            message: format!("Error writing file: {}", e),
+                            message: format!("Failed to upload image to Cloudinary: {}", e),
                             data: None,
                         });
                     }
                 }
-
-                // Add to images array instead of replacing
-                image_urls.push(format!("/uploads/{}", filename));
             }
             _ => {}
         }
     }
 
-    // Validate required fields
     if name.is_none() || description.is_none() || category.is_none() || image_urls.is_empty() {
         return HttpResponse::BadRequest().json(ApiResponse::<()> {
             status: "error".to_string(),
@@ -263,21 +243,17 @@ pub async fn create_project_with_upload(
         });
     }
 
-    // Images are already in upload order due to index prefix in filename
-    // First image will be used as cover
-
-    // Create project
     let dto = CreateProjectDTO {
         name: name.unwrap(),
         description: description.unwrap(),
-        images: image_urls,  // Now using Vec<String> - sorted
+        images: image_urls,
         category: category.unwrap(),
     };
 
     match svc.add(dto).await {
         Ok(project) => HttpResponse::Ok().json(ApiResponse {
             status: "success".to_string(),
-            message: "Project created successfully with uploaded image".to_string(),
+            message: "Project created successfully with uploaded images".to_string(),
             data: Some(project),
         }),
         Err(err) => HttpResponse::InternalServerError().json(ApiResponse::<()> {

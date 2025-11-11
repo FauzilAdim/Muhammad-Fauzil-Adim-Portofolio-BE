@@ -15,9 +15,10 @@ dotenv = "0.15"
 deadpool-postgres = { version = "0.10" } 
 tokio-postgres = { version = "0.7", features = ["with-uuid-1"] }
 uuid = { version = "1", features = ["serde", "v4"] }
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["json", "multipart"] }
 env_logger = "0.11"
 futures-util = "0.3"
 sanitize-filename = "0.5"
 chrono = "0.4"
+base64 = "0.22"
 
