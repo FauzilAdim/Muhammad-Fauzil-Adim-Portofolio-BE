@@ -1,190 +1,230 @@
-# Employee Management Backend - Rust + PostgreSQL
+# 🚀 Portfolio Backend API
 
-Backend API untuk Employee Management System menggunakan Actix-Web dan PostgreSQL.
+Backend API untuk Portfolio Website yang dibangun dengan **Rust**, **Actix-Web**, dan **PostgreSQL**.
 
-## 🚀 Setup Database PostgreSQL
+## 📋 Features
 
-### 1. Pastikan PostgreSQL sudah terinstall dan berjalan
+- ✅ **Project Management API** - CRUD operations untuk projects
+- ✅ **Multiple Image Upload** - Support upload multiple images per project
+- ✅ **Image Order Preservation** - Maintain upload order dengan index prefix
+- ✅ **Category Filtering** - Filter projects by category
+- ✅ **PostgreSQL Database** - Reliable data storage
+- ✅ **CORS Enabled** - Ready untuk frontend integration
+- ✅ **Static File Serving** - Serve uploaded images
 
-Cek apakah PostgreSQL sudah berjalan:
+## 🛠️ Tech Stack
+
+- **Rust** - Programming language
+- **Actix-Web** - Web framework
+- **PostgreSQL** - Database
+- **Tokio** - Async runtime
+- **Serde** - Serialization/deserialization
+- **UUID** - Unique identifiers
+- **Chrono** - Date/time handling
+
+## 📦 Installation
+
+### Prerequisites
+
+- Rust (latest stable version)
+- PostgreSQL
+- Cargo
+
+### Setup
+
+1. **Clone repository:**
 ```bash
-# Windows
-pg_ctl status
-
-# Atau cek service
-services.msc
-# Cari "postgresql" dan pastikan statusnya "Running"
+git clone https://github.com/FauzilAdim/Muhammad-Fauzil-Adim-Portofolio-BE.git
+cd Muhammad-Fauzil-Adim-Portofolio-BE
 ```
 
-### 2. Buat Database (jika belum ada)
-
-Buka DBeaver atau psql dan jalankan:
-```sql
--- Jika ingin buat database baru (opsional)
-CREATE DATABASE employee_db;
-
--- Atau gunakan database 'postgres' yang sudah ada
-```
-
-### 3. Setup Tabel Employees
-
-Jalankan script SQL yang ada di file `setup_database.sql`:
-
-**Cara 1: Menggunakan DBeaver**
-1. Buka DBeaver
-2. Connect ke database PostgreSQL kamu (localhost:5432)
-3. Klik kanan pada database "postgres" → SQL Editor → New SQL Script
-4. Copy paste isi file `setup_database.sql`
-5. Klik Execute (atau tekan Ctrl+Enter)
-
-**Cara 2: Menggunakan psql**
-```bash
-# Masuk ke psql
-psql -U postgres -d postgres
-
-# Jalankan script
-\i setup_database.sql
-
-# Atau langsung dari command line
-psql -U postgres -d postgres -f setup_database.sql
-```
-
-### 4. Konfigurasi Environment Variables
-
-Edit file `.env` sesuai dengan konfigurasi PostgreSQL kamu:
-
-```env
-PG_HOST=localhost
-PG_USER=postgres
-PG_PASS=         # Isi dengan password PostgreSQL kamu (kosongkan jika tidak ada password)
-PG_DB=postgres   # Atau ganti dengan nama database yang kamu buat
-PG_PORT=5432
-```
-
-**PENTING:** Jika PostgreSQL kamu menggunakan password, isi `PG_PASS` dengan password yang benar!
-
-## 🔧 Menjalankan Backend
-
-### 1. Install Dependencies
+2. **Install dependencies:**
 ```bash
 cargo build
 ```
 
-### 2. Jalankan Server
+3. **Setup database:**
+```bash
+# Create database
+createdb portfolio_db
+
+# Run SQL setup
+psql -d portfolio_db -f setup_projects_table_v2.sql
+```
+
+4. **Configure environment:**
+```bash
+# Copy .env.example to .env
+cp .env.example .env
+
+# Edit .env with your database credentials
+```
+
+5. **Run server:**
 ```bash
 cargo run
 ```
 
-Server akan berjalan di: `http://127.0.0.1:8080`
+Server akan running di `http://localhost:8080`
 
-### 3. Test API
+## 🔧 Environment Variables
 
-**Get All Employees:**
-```bash
-curl http://localhost:8080/api/employees
+Create `.env` file:
+
+```env
+DATABASE_URL=postgresql://username:password@localhost/portfolio_db
+RUST_LOG=info
 ```
 
-**Add Employee:**
-```bash
-curl -X POST http://localhost:8080/api/employees \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test User",
-    "position": "Developer",
-    "email": "test@example.com"
-  }'
+## 📡 API Endpoints
+
+### Projects
+
+#### Get All Projects
+```http
+GET /api/projects
 ```
 
-## 📋 API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/employees` | Get all employees |
-| GET | `/api/employees/{id}` | Get employee by ID |
-| POST | `/api/employees` | Create new employee |
-| PUT | `/api/employees/{id}` | Update employee |
-| DELETE | `/api/employees/{id}` | Delete employee |
-
-## 🐛 Troubleshooting
-
-### Error: "PG_PASS not set" atau "Connection refused"
-
-**Solusi:**
-1. Pastikan PostgreSQL service berjalan
-2. Cek username dan password di file `.env`
-3. Pastikan port 5432 tidak diblokir firewall
-
-### Error: "relation employees does not exist"
-
-**Solusi:**
-Jalankan script `setup_database.sql` untuk membuat tabel employees.
-
-### Error: "password authentication failed"
-
-**Solusi:**
-1. Cek password PostgreSQL kamu
-2. Update `PG_PASS` di file `.env`
-3. Atau reset password PostgreSQL:
-```bash
-# Windows (run as Administrator)
-psql -U postgres
-ALTER USER postgres PASSWORD 'password_baru';
+#### Get Projects by Category
+```http
+GET /api/projects?category=web_development
 ```
 
-### Error: "CORS policy"
+Categories:
+- `web_development`
+- `mobile_development`
+- `design_&_ui/ux`
 
-**Solusi:**
-Backend sudah dikonfigurasi untuk menerima request dari:
-- http://localhost:3000
-- http://localhost:3001
-- http://localhost:5173
+#### Get Project by ID
+```http
+GET /api/projects/{id}
+```
 
-Pastikan frontend berjalan di salah satu port tersebut.
+#### Create Project with Upload
+```http
+POST /api/projects/create-with-upload
+Content-Type: multipart/form-data
 
-## 📦 Dependencies
+Fields:
+- name: string
+- description: string
+- category: string
+- files: file[] (multiple images)
+```
 
-- `actix-web` - Web framework
-- `actix-cors` - CORS middleware
-- `tokio-postgres` - PostgreSQL driver
-- `deadpool-postgres` - Connection pooling
-- `serde` - Serialization/deserialization
-- `uuid` - UUID generation
-- `dotenv` - Environment variables
+#### Update Project
+```http
+PUT /api/projects/{id}
+Content-Type: application/json
 
-## 🎯 Struktur Project
+{
+  "name": "Project Name",
+  "description": "Description",
+  "images": ["/uploads/image1.jpg"],
+  "category": "web_development"
+}
+```
+
+#### Delete Project
+```http
+DELETE /api/projects/{id}
+```
+
+## 📁 Project Structure
 
 ```
 be/
 ├── src/
-│   ├── config.rs           # Database configuration
-│   ├── main.rs             # Application entry point
-│   ├── models/             # Data models
-│   ├── dtos/               # Data Transfer Objects
-│   ├── repositories/       # Database operations
-│   ├── services/           # Business logic
-│   └── handlers/           # HTTP handlers
-├── .env                    # Environment variables
-├── setup_database.sql      # Database setup script
-└── Cargo.toml             # Rust dependencies
+│   ├── main.rs              # Entry point
+│   ├── models/
+│   │   └── project.rs       # Project model
+│   ├── dtos/
+│   │   └── project_dto.rs   # Data transfer objects
+│   ├── handlers/
+│   │   └── project_handler.rs  # API handlers
+│   ├── repositories/
+│   │   └── project_postgres.rs # Database operations
+│   └── services/
+│       └── project_service.rs  # Business logic
+├── uploads/                 # Uploaded images (gitignored)
+├── Cargo.toml              # Dependencies
+├── .env                    # Environment variables (gitignored)
+└── setup_projects_table_v2.sql  # Database schema
 ```
 
-## ✅ Checklist Setup
+## 🗄️ Database Schema
 
-- [ ] PostgreSQL terinstall dan berjalan
-- [ ] Database dibuat (atau gunakan database 'postgres')
-- [ ] Tabel 'employees' sudah dibuat (jalankan setup_database.sql)
-- [ ] File .env sudah dikonfigurasi dengan benar
-- [ ] Backend berhasil dijalankan dengan `cargo run`
-- [ ] Test API dengan curl atau Postman
-- [ ] Frontend sudah terhubung ke backend
+```sql
+CREATE TABLE projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    images TEXT[] NOT NULL,
+    category VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
 
-## 🔗 Next Steps
+## 🧪 Testing
 
-Setelah backend berjalan, jalankan frontend:
+Test API dengan HTML test file:
 ```bash
-cd ../fe
-npm install
-npm run dev
+# Open in browser
+open test_project_api.html
 ```
 
-Frontend akan berjalan di: `http://localhost:3001`
+Atau gunakan curl:
+```bash
+# Get all projects
+curl http://localhost:8080/api/projects
+
+# Create project with upload
+curl -X POST http://localhost:8080/api/projects/create-with-upload \
+  -F "name=My Project" \
+  -F "description=Project description" \
+  -F "category=web_development" \
+  -F "files=@image1.jpg" \
+  -F "files=@image2.jpg"
+```
+
+## 🚀 Deployment
+
+### Production Build
+```bash
+cargo build --release
+```
+
+### Run Production
+```bash
+./target/release/employee
+```
+
+## 📝 Notes
+
+- **Image Order:** Images are saved with index prefix (`uuid_000_timestamp.jpg`) to preserve upload order
+- **First Image:** First uploaded image is used as cover/thumbnail
+- **File Storage:** Images stored in `/uploads` directory
+- **CORS:** Enabled for frontend at `http://localhost:3001` and `http://localhost:3002`
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📄 License
+
+This project is open source and available under the MIT License.
+
+## 👤 Author
+
+**Muhammad Fauzil Adim**
+
+- GitHub: [@FauzilAdim](https://github.com/FauzilAdim)
+
+## 🔗 Related
+
+- Frontend Repository: [Portfolio Frontend](https://github.com/FauzilAdim/Muhammad-Fauzil-Adim-Portofolio-FE)
+
+---
+
+Made with ❤️ using Rust & Actix-Web
