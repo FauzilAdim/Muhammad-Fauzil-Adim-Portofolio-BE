@@ -40,13 +40,20 @@ async fn main() -> std::io::Result<()> {
     println!("📁 Static files served from /uploads");
 
     HttpServer::new(move || {
-        // Konfigurasi CORS
+        // Konfigurasi CORS - Support both local and production
         let cors = Cors::default()
+            // Local development
             .allowed_origin("http://localhost:3001")
+            .allowed_origin("http://localhost:3002")
             .allowed_origin("http://localhost:3000")
             .allowed_origin("http://127.0.0.1:3000")
             .allowed_origin("http://localhost:5173")
             .allowed_origin("http://127.0.0.1:5173")
+            // Production - Allow all Vercel domains
+            .allowed_origin_fn(|origin, _req_head| {
+                origin.as_bytes().ends_with(b".vercel.app") ||
+                origin.as_bytes().ends_with(b"vercel.app")
+            })
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
             .allowed_headers(vec![
                 "accept",
@@ -79,7 +86,13 @@ async fn main() -> std::io::Result<()> {
             // Serve static files (uploaded images)
             .service(fs::Files::new("/uploads", "./uploads").show_files_listing())
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind((
+        "0.0.0.0", 
+        std::env::var("PORT")
+            .unwrap_or_else(|_| "8080".to_string())
+            .parse()
+            .expect("PORT must be a number")
+    ))?
     .run()
     .await
 }

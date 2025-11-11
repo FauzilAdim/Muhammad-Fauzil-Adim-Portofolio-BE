@@ -23,8 +23,10 @@ Cargo.lock
 Thumbs.db
 
 # Uploads folder (user uploaded files)
+# Note: In production, use cloud storage (S3, Cloudinary, etc.)
 /uploads/
 uploads/*
+!uploads/.gitkeep
 
 # Logs
 *.log
