@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project API Tester</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        .section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+        }
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="text"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: 500px;
+            overflow-y: auto;
+            font-size: 13px;
+        }
+        .success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 2px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .endpoint {
+            background: #e9ecef;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-family: monospace;
+            display: inline-block;
+            margin: 5px 0;
+            font-size: 13px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-top: 10px;
+            border: 2px solid #ddd;
+        }
+        .category-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        .cat-web { background: #e3f2fd; color: #1976d2; }
+        .cat-mobile { background: #f3e5f5; color: #7b1fa2; }
+        .cat-design { background: #fff3e0; color: #e65100; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Project API Tester</h1>
+        <p class="subtitle">Test all Project CRUD operations and image upload</p>
+
+        <!-- API Info -->
+        <div class="section">
+            <h2>📋 API Endpoints</h2>
+            <div class="grid">
+                <div>
+                    <strong>Base URL:</strong><br>
+                    <span class="endpoint">http://localhost:8080/api</span>
+                </div>
+                <div>
+                    <strong>Upload URL:</strong><br>
+                    <span class="endpoint">http://localhost:8080/api/projects/upload</span>
+                </div>
+                <div>
+                    <strong>Static Files:</strong><br>
+                    <span class="endpoint">http://localhost:8080/uploads/{filename}</span>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <strong>Available Categories:</strong><br>
+                <span class="category-badge cat-web">web</span>
+                <span class="category-badge cat-mobile">mobile</span>
+                <span class="category-badge cat-design">design_&_ui/ux</span>
+            </div>
+        </div>
+
+        <!-- Upload Image -->
+        <div class="section">
+            <h2>📤 1. Upload Image</h2>
+            <p style="margin-bottom: 15px; color: #666;">Upload image terlebih dahulu, lalu gunakan URL yang dikembalikan untuk create project</p>
+            <div class="form-group">
+                <label>Select Image:</label>
+                <input type="file" id="imageFile" accept="image/*" onchange="previewImage(event)">
+                <img id="imagePreview" class="preview-image" style="display: none;">
+            </div>
+            <button onclick="uploadImage()">Upload Image</button>
+            <div id="uploadResult"></div>
+        </div>
+
+        <!-- Create Project -->
+        <div class="section">
+            <h2>➕ 2. Create Project</h2>
+            <div class="form-group">
+                <label>Project Name:</label>
+                <input type="text" id="projectName" placeholder="e.g., Design Poster Event">
+            </div>
+            <div class="form-group">
+                <label>Description:</label>
+                <textarea id="projectDescription" placeholder="Describe your project..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Image URL (from upload):</label>
+                <input type="text" id="projectImage" placeholder="/uploads/filename.jpg">
+            </div>
+            <div class="form-group">
+                <label>Category:</label>
+                <select id="projectCategory">
+                    <option value="">Select Category</option>
+                    <option value="web">Web Development</option>
+                    <option value="mobile">Mobile Development</option>
+                    <option value="design_&_ui/ux">Design & UI/UX</option>
+                </select>
+            </div>
+            <button onclick="createProject()">Create Project</button>
+            <div id="createResult"></div>
+        </div>
+
+        <!-- Get All Projects -->
+        <div class="section">
+            <h2>📋 3. Get All Projects</h2>
+            <button onclick="getAllProjects()">Get All Projects</button>
+            <button onclick="getProjectsByCategory('web')">Filter: Web</button>
+            <button onclick="getProjectsByCategory('mobile')">Filter: Mobile</button>
+            <button onclick="getProjectsByCategory('design_&_ui/ux')">Filter: Design</button>
+            <div id="getAllResult"></div>
+        </div>
+
+        <!-- Get Project by ID -->
+        <div class="section">
+            <h2>🔍 4. Get Project by ID</h2>
+            <div class="form-group">
+                <label>Project ID:</label>
+                <input type="text" id="getProjectId" placeholder="Enter project UUID">
+            </div>
+            <button onclick="getProjectById()">Get Project</button>
+            <div id="getByIdResult"></div>
+        </div>
+
+        <!-- Update Project -->
+        <div class="section">
+            <h2>✏️ 5. Update Project</h2>
+            <div class="form-group">
+                <label>Project ID:</label>
+                <input type="text" id="updateProjectId" placeholder="Enter project UUID">
+            </div>
+            <div class="form-group">
+                <label>New Name (optional):</label>
+                <input type="text" id="updateProjectName">
+            </div>
+            <div class="form-group">
+                <label>New Description (optional):</label>
+                <textarea id="updateProjectDescription"></textarea>
+            </div>
+            <div class="form-group">
+                <label>New Image URL (optional):</label>
+                <input type="text" id="updateProjectImage">
+            </div>
+            <div class="form-group">
+                <label>New Category (optional):</label>
+                <select id="updateProjectCategory">
+                    <option value="">Keep current</option>
+                    <option value="web">Web Development</option>
+                    <option value="mobile">Mobile Development</option>
+                    <option value="design_&_ui/ux">Design & UI/UX</option>
+                </select>
+            </div>
+            <button onclick="updateProject()">Update Project</button>
+            <div id="updateResult"></div>
+        </div>
+
+        <!-- Delete Project -->
+        <div class="section">
+            <h2>🗑️ 6. Delete Project</h2>
+            <div class="form-group">
+                <label>Project ID:</label>
+                <input type="text" id="deleteProjectId" placeholder="Enter project UUID">
+            </div>
+            <button onclick="deleteProject()" style="background: linear-gradient(135deg, #f44336 0%, #e91e63 100%);">Delete Project</button>
+            <div id="deleteResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function uploadImage() {
+            const fileInput = document.getElementById('imageFile');
+            const resultEl = document.getElementById('uploadResult');
+            
+            if (!fileInput.files[0]) {
+                resultEl.innerHTML = '<div class="result error">❌ Please select an image first!</div>';
+                return;
+            }
+
+            resultEl.innerHTML = '<div class="loading"></div> Uploading...';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    document.getElementById('projectImage').value = data.data.url;
+                    resultEl.innerHTML = `<div class="result success">
+✅ Image uploaded successfully!
+
+Filename: ${data.data.filename}
+URL: ${data.data.url}
+
+Image URL has been auto-filled in the Create Project form!
+                    </div>`;
+                } else {
+                    throw new Error(data.message || 'Upload failed');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">
+❌ Error: ${error.message}
+
+Make sure backend is running!
+                </div>`;
+            }
+        }
+
+        async function createProject() {
+            const resultEl = document.getElementById('createResult');
+            
+            const data = {
+                name: document.getElementById('projectName').value,
+                description: document.getElementById('projectDescription').value,
+                image: document.getElementById('projectImage').value,
+                category: document.getElementById('projectCategory').value
+            };
+
+            if (!data.name || !data.description || !data.image || !data.category) {
+                resultEl.innerHTML = '<div class="result error">❌ Please fill all fields!</div>';
+                return;
+            }
+
+            resultEl.innerHTML = '<div class="loading"></div> Creating project...';
+
+            try {
+                const response = await fetch(`${API_BASE}/projects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    resultEl.innerHTML = `<div class="result success">
+✅ Project created successfully!
+
+${JSON.stringify(result, null, 2)}
+                    </div>`;
+                    // Clear form
+                    document.getElementById('projectName').value = '';
+                    document.getElementById('projectDescription').value = '';
+                    document.getElementById('projectImage').value = '';
+                    document.getElementById('projectCategory').value = '';
+                } else {
+                    throw new Error(result.message || 'Create failed');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getAllProjects() {
+            const resultEl = document.getElementById('getAllResult');
+            resultEl.innerHTML = '<div class="loading"></div> Fetching projects...';
+
+            try {
+                const response = await fetch(`${API_BASE}/projects`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    resultEl.innerHTML = `<div class="result success">
+✅ Found ${data.data.length} projects!
+
+${JSON.stringify(data, null, 2)}
+                    </div>`;
+                } else {
+                    throw new Error(data.message || 'Fetch failed');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getProjectsByCategory(category) {
+            const resultEl = document.getElementById('getAllResult');
+            resultEl.innerHTML = `<div class="loading"></div> Fetching ${category} projects...`;
+
+            try {
+                const response = await fetch(`${API_BASE}/projects?category=${category}`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    resultEl.innerHTML = `<div class="result success">
+✅ Found ${data.data.length} ${category} projects!
+
+${JSON.stringify(data, null, 2)}
+                    </div>`;
+                } else {
+                    throw new Error(data.message || 'Fetch failed');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function getProjectById() {
+            const id = document.getElementById('getProjectId').value;
+            const resultEl = document.getElementById('getByIdResult');
+
+            if (!id) {
+                resultEl.innerHTML = '<div class="result error">❌ Please enter project ID!</div>';
+                return;
+            }
+
+            resultEl.innerHTML = '<div class="loading"></div> Fetching project...';
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${id}`);
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    resultEl.innerHTML = `<div class="result success">
+✅ Project found!
+
+${JSON.stringify(data, null, 2)}
+                    </div>`;
+                } else {
+                    throw new Error(data.message || 'Project not found');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function updateProject() {
+            const id = document.getElementById('updateProjectId').value;
+            const resultEl = document.getElementById('updateResult');
+
+            if (!id) {
+                resultEl.innerHTML = '<div class="result error">❌ Please enter project ID!</div>';
+                return;
+            }
+
+            const data = {};
+            const name = document.getElementById('updateProjectName').value;
+            const description = document.getElementById('updateProjectDescription').value;
+            const image = document.getElementById('updateProjectImage').value;
+            const category = document.getElementById('updateProjectCategory').value;
+
+            if (name) data.name = name;
+            if (description) data.description = description;
+            if (image) data.image = image;
+            if (category) data.category = category;
+
+            if (Object.keys(data).length === 0) {
+                resultEl.innerHTML = '<div class="result error">❌ Please fill at least one field to update!</div>';
+                return;
+            }
+
+            resultEl.innerHTML = '<div class="loading"></div> Updating project...';
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.status === 'success') {
+                    resultEl.innerHTML = `<div class="result success">
+✅ Project updated successfully!
+
+${JSON.stringify(result, null, 2)}
+                    </div>`;
+                } else {
+                    throw new Error(result.message || 'Update failed');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        async function deleteProject() {
+            const id = document.getElementById('deleteProjectId').value;
+            const resultEl = document.getElementById('deleteResult');
+
+            if (!id) {
+                resultEl.innerHTML = '<div class="result error">❌ Please enter project ID!</div>';
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete this project?')) {
+                return;
+            }
+
+            resultEl.innerHTML = '<div class="loading"></div> Deleting project...';
+
+            try {
+                const response = await fetch(`${API_BASE}/projects/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.status === 'success') {
+                    resultEl.innerHTML = `<div class="result success">
+✅ Project deleted successfully!
+
+${JSON.stringify(data, null, 2)}
+                    </div>`;
+                    document.getElementById('deleteProjectId').value = '';
+                } else {
+                    throw new Error(data.message || 'Delete failed');
+                }
+            } catch (error) {
+                resultEl.innerHTML = `<div class="result error">❌ Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
