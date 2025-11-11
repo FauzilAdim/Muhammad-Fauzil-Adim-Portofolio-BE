@@ -11,10 +11,8 @@ pub struct ProjectPostgresRepo {
 }
 
 fn from_row(row: Row) -> Project {
-    // Get JSONB images as string and parse to Vec<String>
-    let images_str: String = row.get("images");
-    let images: Vec<String> = serde_json::from_str(&images_str)
-        .unwrap_or_else(|_| vec![]);
+    // Get images array directly from PostgreSQL
+    let images: Vec<String> = row.get("images");
     
     // Get timestamps as SystemTime and convert to string
     let created_at: Option<SystemTime> = row.get("created_at");
@@ -70,7 +68,7 @@ impl ProjectPostgresRepo {
     pub async fn get_all(&self) -> Result<Vec<Project>, String> {
         let client = self.pool.get().await.map_err(|e| e.to_string())?;
         let stmt = client
-            .prepare("SELECT id, name, description, images::text, category, created_at, updated_at FROM projects ORDER BY created_at DESC")
+            .prepare("SELECT id, name, description, images, category, created_at, updated_at FROM projects ORDER BY created_at DESC")
             .await
             .map_err(|e| e.to_string())?;
         let rows = client.query(&stmt, &[]).await.map_err(|e| e.to_string())?;
@@ -80,7 +78,7 @@ impl ProjectPostgresRepo {
     pub async fn get_by_category(&self, category: String) -> Result<Vec<Project>, String> {
         let client = self.pool.get().await.map_err(|e| e.to_string())?;
         let stmt = client
-            .prepare("SELECT id, name, description, images::text, category, created_at, updated_at FROM projects WHERE category = $1 ORDER BY created_at DESC")
+            .prepare("SELECT id, name, description, images, category, created_at, updated_at FROM projects WHERE category = $1 ORDER BY created_at DESC")
             .await
             .map_err(|e| e.to_string())?;
         let rows = client.query(&stmt, &[&category]).await.map_err(|e| e.to_string())?;
@@ -90,7 +88,7 @@ impl ProjectPostgresRepo {
     pub async fn get_by_id(&self, id: Uuid) -> Result<Project, String> {
         let client = self.pool.get().await.map_err(|e| e.to_string())?;
         let stmt = client
-            .prepare("SELECT id, name, description, images::text, category, created_at, updated_at FROM projects WHERE id = $1")
+            .prepare("SELECT id, name, description, images, category, created_at, updated_at FROM projects WHERE id = $1")
             .await
             .map_err(|e| e.to_string())?;
         let row = client
