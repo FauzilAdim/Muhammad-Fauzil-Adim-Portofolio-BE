@@ -5,4 +5,4 @@ nixPkgs = ["rust", "cargo"]
 cmds = ["cargo build --release"]
 
 [start]
-cmd = "./target/release/employee"
+cmd = "./bin/employee"
