@@ -34,16 +34,11 @@ impl ProjectPostgresRepo {
         let client = self.pool.get().await.map_err(|e| e.to_string())?;
         let id = Uuid::new_v4();
         
-        // Convert Vec<String> to JSON string
-        let images_json = serde_json::to_string(&dto.images)
-            .map_err(|e| format!("Failed to serialize images: {}", e))?;
-        
         let stmt = client
-            .prepare_typed(
+            .prepare(
                 "INSERT INTO projects (id, name, description, images, category) 
-                 VALUES ($1, $2, $3, $4::jsonb, $5) 
-                 RETURNING id, name, description, images::text, category, created_at, updated_at",
-                &[Type::UUID, Type::VARCHAR, Type::TEXT, Type::TEXT, Type::VARCHAR]
+                 VALUES ($1, $2, $3, $4, $5) 
+                 RETURNING id, name, description, images, category, created_at, updated_at"
             )
             .await
             .map_err(|e| e.to_string())?;
@@ -55,7 +50,7 @@ impl ProjectPostgresRepo {
                     &id, 
                     &dto.name, 
                     &dto.description, 
-                    &images_json,
+                    &dto.images,
                     &dto.category
                 ]
             )
@@ -106,23 +101,18 @@ impl ProjectPostgresRepo {
         let description = dto.description.unwrap_or(current.description);
         let images = dto.images.unwrap_or(current.images);
         let category = dto.category.unwrap_or(current.category);
-        
-        // Convert Vec<String> to JSON string
-        let images_json = serde_json::to_string(&images)
-            .map_err(|e| format!("Failed to serialize images: {}", e))?;
 
         let stmt = client
-            .prepare_typed(
-                "UPDATE projects SET name = $1, description = $2, images = $3::jsonb, category = $4, updated_at = CURRENT_TIMESTAMP 
+            .prepare(
+                "UPDATE projects SET name = $1, description = $2, images = $3, category = $4, updated_at = CURRENT_TIMESTAMP 
                  WHERE id = $5 
-                 RETURNING id, name, description, images::text, category, created_at, updated_at",
-                &[Type::VARCHAR, Type::TEXT, Type::TEXT, Type::VARCHAR, Type::UUID]
+                 RETURNING id, name, description, images, category, created_at, updated_at"
             )
             .await
             .map_err(|e| e.to_string())?;
         
         let row = client
-            .query_one(&stmt, &[&name, &description, &images_json, &category, &id])
+            .query_one(&stmt, &[&name, &description, &images, &category, &id])
             .await
             .map_err(|e| e.to_string())?;
         
