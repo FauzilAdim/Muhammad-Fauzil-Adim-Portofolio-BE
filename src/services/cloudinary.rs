@@ -14,11 +14,16 @@ pub struct CloudinaryService {
 }
 
 impl CloudinaryService {
-    pub fn new() -> Self {
-        Self {
-            cloud_name: env::var("CLOUDINARY_CLOUD_NAME").expect("CLOUDINARY_CLOUD_NAME must be set"),
-            upload_preset: env::var("CLOUDINARY_UPLOAD_PRESET").unwrap_or_else(|_| "portfolio_uploads".to_string()),
-        }
+    pub fn new() -> Result<Self, String> {
+        let cloud_name = env::var("CLOUDINARY_CLOUD_NAME")
+            .map_err(|_| "CLOUDINARY_CLOUD_NAME not set".to_string())?;
+        let upload_preset = env::var("CLOUDINARY_UPLOAD_PRESET")
+            .unwrap_or_else(|_| "portfolio_uploads".to_string());
+        
+        Ok(Self {
+            cloud_name,
+            upload_preset,
+        })
     }
 
     pub async fn upload_image(&self, image_data: Vec<u8>, filename: String) -> Result<String, String> {

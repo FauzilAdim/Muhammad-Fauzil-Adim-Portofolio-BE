@@ -140,7 +140,16 @@ pub async fn create_project_with_upload(
     let mut category: Option<String> = None;
     let mut image_urls: Vec<String> = Vec::new();
     
-    let cloudinary = CloudinaryService::new();
+    let cloudinary = match CloudinaryService::new() {
+        Ok(service) => service,
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(ApiResponse::<()> {
+                status: "error".to_string(),
+                message: format!("Cloudinary not configured: {}. Please set CLOUDINARY_CLOUD_NAME environment variable.", e),
+                data: None,
+            });
+        }
+    };
 
     while let Some(item) = payload.next().await {
         let mut field = match item {
